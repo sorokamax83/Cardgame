@@ -1,0 +1,47 @@
+# ============= UNITY =============
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/Assets/AssetStoreTools*
+
+# ============= VISUAL STUDIO =============
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# ============= OS GENERATED =============
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# ============= VISUAL STUDIO CODE =============
+.vscode/
+*.code-workspace
+
+# ============= MISC =============
+*.tmp
+*.temp
+*.log
+*.cache
+*.pidb
+*.meta
+*.cs.meta
+*.unity.meta
+*.asset.meta
+*.prefab.meta
