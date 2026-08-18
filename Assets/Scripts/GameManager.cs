@@ -26,7 +26,8 @@ public class GameManager : MonoBehaviour
     public TMP_Text playerHPText;  // Цифры HP игрока (20/20)
     public TMP_Text enemyHPText;   // Цифры HP врага (20/20)
     
-    public Transform handPanel;
+    public Transform handPanel;        // Панель для карт игрока
+    public Transform enemyHandPanel;   // НОВОЕ: панель для карт врага
     public GameObject cardPrefab;
     public GameObject chargePanel;
 
@@ -101,7 +102,7 @@ public class GameManager : MonoBehaviour
         // Обновляем остальные тексты
         turnText.text = isPlayerTurn ? "Your Turn" : "Enemy Turn";
 
-        // Обновляем руку игрока
+        // === ОБНОВЛЯЕМ РУКУ ИГРОКА ===
         foreach (Transform child in handPanel)
         {
             Destroy(child.gameObject);
@@ -112,7 +113,26 @@ public class GameManager : MonoBehaviour
             Card card = player.hand[i];
             GameObject cardObj = Instantiate(cardPrefab, handPanel);
             CardUI cardUI = cardObj.GetComponent<CardUI>();
-            cardUI.Initialize(card, i, this);
+            cardUI.Initialize(card, i, this, false); // false = карта игрока
+        }
+
+        // === ОБНОВЛЯЕМ РУКУ ВРАГА (рубашкой вверх) ===
+        if (enemyHandPanel != null)
+        {
+            // Очищаем панель врага
+            foreach (Transform child in enemyHandPanel)
+            {
+                Destroy(child.gameObject);
+            }
+
+            // Создаём карты врага рубашкой вверх
+            for (int i = 0; i < enemy.hand.Count; i++)
+            {
+                Card card = enemy.hand[i];
+                GameObject cardObj = Instantiate(cardPrefab, enemyHandPanel);
+                CardUI cardUI = cardObj.GetComponent<CardUI>();
+                cardUI.Initialize(card, i, this, true); // true = вражеская карта
+            }
         }
 
         UpdateChargesUI();
@@ -182,7 +202,6 @@ public class GameManager : MonoBehaviour
             // Случайное смещение
             float offsetX = Random.Range(-intensity, intensity);
             float offsetY = Random.Range(-intensity, intensity);
-            // ИСПРАВЛЕНО: используем Vector3 вместо Vector2
             portrait.rectTransform.anchoredPosition = originalPosition + new Vector3(offsetX, offsetY, 0f);
             
             elapsed += Time.deltaTime;
@@ -207,7 +226,6 @@ public class GameManager : MonoBehaviour
         {
             float offsetX = Random.Range(-intensity, intensity);
             float offsetY = Random.Range(-intensity, intensity);
-            // ИСПРАВЛЕНО: используем Vector3 вместо Vector2
             portrait.rectTransform.anchoredPosition = originalPosition + new Vector3(offsetX, offsetY, 0f);
             
             elapsed += Time.deltaTime;

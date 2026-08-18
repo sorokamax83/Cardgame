@@ -311,6 +311,7 @@ MonoBehaviour:
   descriptionText: {fileID: 2216359449001826555}
   cardImage: {fileID: 5555123356762524082}
   backgroundImage: {fileID: 3100294576050091616}
+  cardBackSprite: {fileID: -5777897504942914823, guid: 81699db1b18084e48889da95d40b3680, type: 3}
 --- !u!1 &3681869613783051967
 GameObject:
   m_ObjectHideFlags: 0
