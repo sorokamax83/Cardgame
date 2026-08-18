@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3579eb275b30c247bdb5a836a6cb50f, type: 3}
+  m_Name: Card_Strike
+  m_EditorClassIdentifier: Assembly-CSharp::Card
+  cardName: Strike
+  cost: 1
+  type: 0
+  value: 2
+  cardImage: {fileID: 0}
+  description: Deals 2 damage instantly.
