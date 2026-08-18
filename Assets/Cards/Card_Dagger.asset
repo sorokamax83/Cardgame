@@ -16,5 +16,5 @@ MonoBehaviour:
   cost: 2
   type: 1
   value: 3
-  cardImage: {fileID: 0}
+  cardImage: {fileID: 5797277111548008825, guid: 977d534a97e363a499401454e7907441, type: 3}
   description: Deals 3 damage at the start of your next turn.

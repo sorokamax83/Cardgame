@@ -1,17 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;          // <-- Добавил для TextMeshPro
-using UnityEngine.UI;  // <-- Для Image и других UI-компонентов
+using TMPro;          // Для TextMeshPro
+using UnityEngine.UI;  // Для Image и других UI-компонентов
 
 public class GameManager : MonoBehaviour
 {
     [Header("UI References")]
-    public TMP_Text playerHPText;      // Изменил Text на TMP_Text
-    public TMP_Text enemyHPText;       // Изменил Text на TMP_Text
-    public TMP_Text staminaText;       // Изменил Text на TMP_Text
-    public TMP_Text infoText;          // Изменил Text на TMP_Text
-    public TMP_Text turnText;          // Изменил Text на TMP_Text
+    // Полоски здоровья (прогресс-бары)
+    public Image playerHPFill;     // Зелёная полоска HP игрока
+    public Image enemyHPFill;      // Красная полоска HP врага
+    
+    // Полоска выносливости
+    public Image staminaFill;      // Голубая/жёлтая полоска выносливости
+    
+    // ПОРТРЕТЫ
+    public Image playerPortrait;    // Портрет игрока
+    public Image enemyPortrait;     // Портрет врага
+    
+    // Тексты (оставляем только нужные)
+    public TMP_Text infoText;
+    public TMP_Text turnText;
+    
+    // Опционально: тексты с цифрами HP поверх полосок
+    public TMP_Text playerHPText;  // Цифры HP игрока (20/20)
+    public TMP_Text enemyHPText;   // Цифры HP врага (20/20)
+    
     public Transform handPanel;
     public GameObject cardPrefab;
     public GameObject chargePanel;
@@ -19,10 +33,25 @@ public class GameManager : MonoBehaviour
     [Header("Card Data")]
     public List<Card> allCards;
 
+    [Header("Portraits")]
+    public Sprite playerDefaultPortrait;   // Портрет игрока по умолчанию
+    public Sprite enemyDefaultPortrait;    // Портрет врага по умолчанию
+    public Sprite playerDamagedPortrait;   // Портрет игрока при низком HP (опционально)
+    public Sprite enemyDamagedPortrait;    // Портрет врага при низком HP (опционально)
+
+    [Header("Animation Settings")]
+    public float portraitShakeIntensity = 15f;  // Интенсивность тряски портрета
+    public float portraitShakeDuration = 0.3f;  // Длительность тряски
+    public float portraitFlashDuration = 0.15f; // Длительность вспышки
+
     private Player player;
     private Player enemy;
     private bool isPlayerTurn = true;
     private bool gameOver = false;
+
+    // Для хранения оригинальных цветов портретов
+    private Color originalPlayerColor;
+    private Color originalEnemyColor;
 
     void Start()
     {
@@ -37,17 +66,42 @@ public class GameManager : MonoBehaviour
         player = new Player("Hero", playerDeck);
         enemy = new Player("Mage", enemyDeck);
 
+        // Сохраняем оригинальные цвета портретов
+        if (playerPortrait != null)
+            originalPlayerColor = playerPortrait.color;
+        if (enemyPortrait != null)
+            originalEnemyColor = enemyPortrait.color;
+
+        // Устанавливаем портреты по умолчанию
+        SetPortrait(playerPortrait, playerDefaultPortrait);
+        SetPortrait(enemyPortrait, enemyDefaultPortrait);
+
         UpdateUI();
         StartCoroutine(EnemyTurnCoroutine());
     }
 
     void UpdateUI()
     {
-        playerHPText.text = "HP: " + player.currentHP;
-        enemyHPText.text = "HP: " + enemy.currentHP;
-        staminaText.text = "Stamina: " + player.currentStamina + "/" + player.stamina;
+        // Обновляем полоски здоровья
+        UpdateHealthBar(playerHPFill, player.currentHP, player.maxHP, Color.green);
+        UpdateHealthBar(enemyHPFill, enemy.currentHP, enemy.maxHP, Color.red);
+        
+        // Обновляем полоску выносливости
+        UpdateStaminaBar(staminaFill, player.currentStamina, player.stamina);
+        
+        // Обновляем портреты в зависимости от HP
+        UpdatePortraits();
+        
+        // Обновляем тексты с цифрами HP (если они есть)
+        if (playerHPText != null)
+            playerHPText.text = $"{player.currentHP}/{player.maxHP}";
+        if (enemyHPText != null)
+            enemyHPText.text = $"{enemy.currentHP}/{enemy.maxHP}";
+        
+        // Обновляем остальные тексты
         turnText.text = isPlayerTurn ? "Your Turn" : "Enemy Turn";
 
+        // Обновляем руку игрока
         foreach (Transform child in handPanel)
         {
             Destroy(child.gameObject);
@@ -64,9 +118,147 @@ public class GameManager : MonoBehaviour
         UpdateChargesUI();
     }
 
+    /// <summary>
+    /// Устанавливает портрет
+    /// </summary>
+    void SetPortrait(Image portraitImage, Sprite sprite)
+    {
+        if (portraitImage != null && sprite != null)
+        {
+            portraitImage.sprite = sprite;
+        }
+    }
+
+    /// <summary>
+    /// Обновляет портреты в зависимости от HP
+    /// </summary>
+    void UpdatePortraits()
+    {
+        if (playerPortrait == null || enemyPortrait == null) return;
+
+        // Проверяем HP игрока
+        float playerHPPercent = (float)player.currentHP / player.maxHP;
+        if (playerHPPercent < 0.25f && playerDamagedPortrait != null)
+        {
+            playerPortrait.sprite = playerDamagedPortrait;
+        }
+        else if (playerDefaultPortrait != null)
+        {
+            playerPortrait.sprite = playerDefaultPortrait;
+        }
+
+        // Проверяем HP врага
+        float enemyHPPercent = (float)enemy.currentHP / enemy.maxHP;
+        if (enemyHPPercent < 0.25f && enemyDamagedPortrait != null)
+        {
+            enemyPortrait.sprite = enemyDamagedPortrait;
+        }
+        else if (enemyDefaultPortrait != null)
+        {
+            enemyPortrait.sprite = enemyDefaultPortrait;
+        }
+    }
+
+    /// <summary>
+    /// Анимация портрета при получении урона (тряска + вспышка)
+    /// </summary>
+    IEnumerator AnimatePortrait(Image portrait, Color flashColor, float intensity, float duration, float flashDuration)
+    {
+        if (portrait == null) yield break;
+        
+        // Сохраняем исходное положение
+        Vector3 originalPosition = portrait.rectTransform.anchoredPosition;
+        Color originalColor = portrait.color;
+        
+        // --- Фаза 1: Вспышка ---
+        portrait.color = flashColor;
+        yield return new WaitForSeconds(flashDuration);
+        portrait.color = originalColor;
+        
+        // --- Фаза 2: Тряска ---
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            // Случайное смещение
+            float offsetX = Random.Range(-intensity, intensity);
+            float offsetY = Random.Range(-intensity, intensity);
+            // ИСПРАВЛЕНО: используем Vector3 вместо Vector2
+            portrait.rectTransform.anchoredPosition = originalPosition + new Vector3(offsetX, offsetY, 0f);
+            
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        // Возвращаем портрет на место
+        portrait.rectTransform.anchoredPosition = originalPosition;
+    }
+
+    /// <summary>
+    /// Упрощённая версия анимации (только тряска)
+    /// </summary>
+    IEnumerator ShakePortrait(Image portrait, float intensity, float duration)
+    {
+        if (portrait == null) yield break;
+        
+        Vector3 originalPosition = portrait.rectTransform.anchoredPosition;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            float offsetX = Random.Range(-intensity, intensity);
+            float offsetY = Random.Range(-intensity, intensity);
+            // ИСПРАВЛЕНО: используем Vector3 вместо Vector2
+            portrait.rectTransform.anchoredPosition = originalPosition + new Vector3(offsetX, offsetY, 0f);
+            
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        portrait.rectTransform.anchoredPosition = originalPosition;
+    }
+
+    /// <summary>
+    /// Обновляет полоску здоровья
+    /// </summary>
+    void UpdateHealthBar(Image fillImage, int currentHP, int maxHP, Color baseColor)
+    {
+        if (fillImage == null) return;
+        
+        float fillAmount = (float)currentHP / maxHP;
+        fillAmount = Mathf.Clamp01(fillAmount);
+        fillImage.fillAmount = fillAmount;
+        
+        if (fillAmount < 0.25f)
+            fillImage.color = Color.red;
+        else if (fillAmount < 0.5f)
+            fillImage.color = Color.yellow;
+        else
+            fillImage.color = baseColor;
+    }
+
+    /// <summary>
+    /// Обновляет полоску выносливости
+    /// </summary>
+    void UpdateStaminaBar(Image fillImage, int currentStamina, int maxStamina)
+    {
+        if (fillImage == null) return;
+        
+        float fillAmount = (float)currentStamina / maxStamina;
+        fillAmount = Mathf.Clamp01(fillAmount);
+        fillImage.fillAmount = fillAmount;
+        
+        if (fillAmount < 0.25f)
+            fillImage.color = Color.red;
+        else if (fillAmount < 0.5f)
+            fillImage.color = Color.yellow;
+        else
+            fillImage.color = new Color(0.2f, 0.6f, 1f); // Голубой
+    }
+
     void UpdateChargesUI()
     {
-        // Можно добавить визуализацию зарядов
+        Debug.Log($"Player charges: {string.Join(", ", player.charges)}");
+        Debug.Log($"Enemy charges: {string.Join(", ", enemy.charges)}");
     }
 
     void ShowInfo(string message)
@@ -101,17 +293,25 @@ public class GameManager : MonoBehaviour
         {
             case CardType.Attack:
                 enemy.TakeDamage(card.value);
-                ShowInfo("Dealt " + card.value + " damage!");
+                // Анимация портрета врага при получении урона
+                StartCoroutine(AnimatePortrait(
+                    enemyPortrait, 
+                    Color.red, 
+                    portraitShakeIntensity, 
+                    portraitShakeDuration, 
+                    portraitFlashDuration
+                ));
+                ShowInfo($"Dealt {card.value} damage!");
                 break;
 
             case CardType.Charge:
                 player.charges.Add(card.value);
-                ShowInfo("Charge for " + card.value + " damage set!");
+                ShowInfo($"Charge for {card.value} damage set!");
                 break;
 
             case CardType.Shield:
                 player.shield = card.value;
-                ShowInfo("Shield for " + card.value + " set!");
+                ShowInfo($"Shield for {card.value} set!");
                 break;
         }
 
@@ -150,7 +350,15 @@ public class GameManager : MonoBehaviour
             }
             player.charges.Clear();
             enemy.TakeDamage(totalCharge);
-            ShowInfo("Charges hit enemy for " + totalCharge + " damage!");
+            // Анимация портрета врага при получении урона от зарядов
+            StartCoroutine(AnimatePortrait(
+                enemyPortrait, 
+                Color.red, 
+                portraitShakeIntensity, 
+                portraitShakeDuration, 
+                portraitFlashDuration
+            ));
+            ShowInfo($"Charges hit enemy for {totalCharge} damage!");
             yield return new WaitForSeconds(1f);
 
             if (!enemy.IsAlive())
@@ -193,7 +401,7 @@ public class GameManager : MonoBehaviour
                 enemy.hand.Remove(shieldCard);
                 enemy.shield = shieldCard.value;
                 stamina -= shieldCard.cost;
-                ShowInfo("Enemy sets shield for " + shieldCard.value + "!");
+                ShowInfo($"Enemy sets shield for {shieldCard.value}!");
                 yield return new WaitForSeconds(1f);
             }
         }
@@ -211,17 +419,25 @@ public class GameManager : MonoBehaviour
             {
                 case CardType.Attack:
                     player.TakeDamage(card.value);
-                    ShowInfo("Enemy attacks for " + card.value + " damage!");
+                    // Анимация портрета игрока при получении урона от врага
+                    StartCoroutine(AnimatePortrait(
+                        playerPortrait, 
+                        Color.red, 
+                        portraitShakeIntensity, 
+                        portraitShakeDuration, 
+                        portraitFlashDuration
+                    ));
+                    ShowInfo($"Enemy attacks for {card.value} damage!");
                     break;
 
                 case CardType.Charge:
                     enemy.charges.Add(card.value);
-                    ShowInfo("Enemy sets charge for " + card.value + "!");
+                    ShowInfo($"Enemy sets charge for {card.value}!");
                     break;
 
                 case CardType.Shield:
                     enemy.shield = card.value;
-                    ShowInfo("Enemy sets shield for " + card.value + "!");
+                    ShowInfo($"Enemy sets shield for {card.value}!");
                     break;
             }
 
@@ -239,11 +455,11 @@ public class GameManager : MonoBehaviour
         gameOver = true;
         if (playerWon)
         {
-            ShowInfo("YOU WIN!");
+            ShowInfo("🏆 YOU WIN!");
         }
         else
         {
-            ShowInfo("YOU LOSE...");
+            ShowInfo("💀 YOU LOSE...");
         }
     }
 

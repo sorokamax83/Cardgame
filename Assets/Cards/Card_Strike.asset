@@ -16,5 +16,5 @@ MonoBehaviour:
   cost: 1
   type: 0
   value: 2
-  cardImage: {fileID: 0}
+  cardImage: {fileID: -5191308225362931239, guid: 6300967595f90d64d84ee51a9dc8bd2d, type: 3}
   description: Deals 2 damage instantly.

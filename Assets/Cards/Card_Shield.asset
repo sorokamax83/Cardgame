@@ -16,5 +16,5 @@ MonoBehaviour:
   cost: 1
   type: 2
   value: 3
-  cardImage: {fileID: 0}
+  cardImage: {fileID: -6717884257390833292, guid: 15f85fb657caba8449596427bb288fb2, type: 3}
   description: Blocks 3 damage this turn.
