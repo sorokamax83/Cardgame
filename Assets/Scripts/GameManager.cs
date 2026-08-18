@@ -27,12 +27,15 @@ public class GameManager : MonoBehaviour
     public TMP_Text enemyHPText;   // Цифры HP врага (20/20)
     
     public Transform handPanel;        // Панель для карт игрока
-    public Transform enemyHandPanel;   // НОВОЕ: панель для карт врага
+    public Transform enemyHandPanel;   // Панель для карт врага
     public GameObject cardPrefab;
     public GameObject chargePanel;
 
     [Header("Card Data")]
     public List<Card> allCards;
+
+    [Header("Deck Settings")]
+    public int deckCopies = 50;        // Количество копий каждой карты в колоде
 
     [Header("Portraits")]
     public Sprite playerDefaultPortrait;   // Портрет игрока по умолчанию
@@ -44,6 +47,13 @@ public class GameManager : MonoBehaviour
     public float portraitShakeIntensity = 15f;  // Интенсивность тряски портрета
     public float portraitShakeDuration = 0.3f;  // Длительность тряски
     public float portraitFlashDuration = 0.15f; // Длительность вспышки
+
+    [Header("Draw Settings")]
+    public int cardsToDrawPerTurn = 1;        // Количество карт, добираемых за ход
+    public int handSizeLimit = 4;             // НОВОЕ: минимальное количество карт в руке
+
+    [Header("Game Balance")]
+    public int maxStamina = 5;                // НОВОЕ: максимальная выносливость за ход
 
     private Player player;
     private Player enemy;
@@ -61,11 +71,26 @@ public class GameManager : MonoBehaviour
 
     void StartGame()
     {
-        List<Card> playerDeck = new List<Card>(allCards);
-        List<Card> enemyDeck = new List<Card>(allCards);
+        // === НОВОЕ: создаём колоды с копиями карт ===
+        List<Card> playerDeck = new List<Card>();
+        List<Card> enemyDeck = new List<Card>();
         
-        player = new Player("Hero", playerDeck);
-        enemy = new Player("Mage", enemyDeck);
+        // Создаём копии карт для колоды
+        for (int i = 0; i < deckCopies; i++)
+        {
+            foreach (Card card in allCards)
+            {
+                playerDeck.Add(card);
+                enemyDeck.Add(card);
+            }
+        }
+        
+        Debug.Log($"Колода игрока: {playerDeck.Count} карт");
+        Debug.Log($"Колода врага: {enemyDeck.Count} карт");
+        
+        // Передаём максимальную выносливость в конструктор
+        player = new Player("Hero", playerDeck, maxStamina);
+        enemy = new Player("Mage", enemyDeck, maxStamina);
 
         // Сохраняем оригинальные цвета портретов
         if (playerPortrait != null)
@@ -291,6 +316,45 @@ public class GameManager : MonoBehaviour
         infoText.text = "";
     }
 
+    /// <summary>
+    /// Добирает карты до указанного лимита
+    /// </summary>
+    void DrawToHandLimit(Player player, int limit)
+    {
+        if (player == null) return;
+        
+        int cardsToDraw = limit - player.hand.Count;
+        if (cardsToDraw <= 0)
+        {
+            Debug.Log($"{player.playerName}: уже есть {player.hand.Count} карт (лимит {limit})");
+            return;
+        }
+        
+        // Ограничиваем количество добираемых карт, если колода маленькая
+        int availableCards = player.deck.Count;
+        int actualDraw = Mathf.Min(cardsToDraw, availableCards);
+        
+        if (actualDraw > 0)
+        {
+            player.DrawRandomCards(actualDraw);
+            Debug.Log($"{player.playerName} добрал {actualDraw} карт до {limit} (было {player.hand.Count - actualDraw})");
+            
+            // Показываем сообщение игроку
+            if (player == this.player)
+            {
+                ShowInfo($"Вы добрали до {limit} карт!");
+            }
+        }
+        else if (player.hand.Count < limit && !player.HasCardsInDeck())
+        {
+            Debug.Log($"{player.playerName}: колода пуста, невозможно добрать до {limit} карт");
+            if (player == this.player)
+            {
+                ShowInfo("Ваша колода пуста!");
+            }
+        }
+    }
+
     public void PlayCard(int cardIndex)
     {
         if (!isPlayerTurn || gameOver) return;
@@ -399,10 +463,14 @@ public class GameManager : MonoBehaviour
 
         player.ResetShield();
 
+        // === ПЕРЕХОД К ИГРОКУ ===
         isPlayerTurn = true;
         player.ResetStamina();
-        player.DrawCards(1);
-        enemy.DrawCards(1);
+
+        // === НОВОЕ: добор карт ДО ЛИМИТА ===
+        DrawToHandLimit(player, handSizeLimit);
+        DrawToHandLimit(enemy, handSizeLimit);
+
         UpdateUI();
         ShowInfo("Your turn!");
     }

@@ -165,6 +165,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 505aacf693307524580be034895e1efe, type: 2}
   - {fileID: 11400000, guid: 02fd7e84b9cfec046b4e524421936f0d, type: 2}
   - {fileID: 11400000, guid: 247540b8246c3ff41b5499e04b5be6f9, type: 2}
+  deckCopies: 50
   playerDefaultPortrait: {fileID: 8163155539001978415, guid: 85f9c84c7ad7fb04bba18471640a435b, type: 3}
   enemyDefaultPortrait: {fileID: 2070572884380351619, guid: fcb8e58ce78a400408701840ff040846, type: 3}
   playerDamagedPortrait: {fileID: 0}
@@ -172,6 +173,9 @@ MonoBehaviour:
   portraitShakeIntensity: 15
   portraitShakeDuration: 0.3
   portraitFlashDuration: 0.15
+  cardsToDrawPerTurn: 1
+  handSizeLimit: 4
+  maxStamina: 5
 --- !u!4 &255177157
 Transform:
   m_ObjectHideFlags: 0
@@ -1003,7 +1007,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 276, y: -63}
+  m_AnchoredPosition: {x: 305, y: -63}
   m_SizeDelta: {x: 100, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1157398101
@@ -1154,7 +1158,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 225, y: -87.3}
+  m_AnchoredPosition: {x: 257, y: -87.3}
   m_SizeDelta: {x: 200, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1225787761
@@ -1341,7 +1345,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 231, y: -195}
+  m_AnchoredPosition: {x: 259, y: -195}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1548281604

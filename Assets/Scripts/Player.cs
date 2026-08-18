@@ -7,17 +7,35 @@ public class Player
     public string playerName;
     public int maxHP = 20;
     public int currentHP;
-    public int stamina = 3;        // Максимум Выдержки за ход
+    public int stamina = 5;        // Максимум Выдержки за ход
     public int currentStamina;
     public int shield = 0;         // Активный щит
     public List<Card> hand = new List<Card>();
     public List<int> charges = new List<int>(); // Значения урона зарядов
     public List<Card> deck;
 
+    // Максимальный размер руки (можно настроить)
+    public int maxHandSize = 8;
+
+    // Конструктор с 2 аргументами (для обратной совместимости)
     public Player(string name, List<Card> startingDeck)
     {
         playerName = name;
         currentHP = maxHP;
+        stamina = 5;
+        currentStamina = stamina;
+        deck = new List<Card>(startingDeck);
+        ShuffleDeck();
+        DrawCards(4);
+    }
+
+    // НОВЫЙ КОНСТРУКТОР с 3 аргументами
+    public Player(string name, List<Card> startingDeck, int startingStamina)
+    {
+        playerName = name;
+        currentHP = maxHP;
+        stamina = startingStamina;
+        currentStamina = stamina;
         deck = new List<Card>(startingDeck);
         ShuffleDeck();
         DrawCards(4);
@@ -38,12 +56,58 @@ public class Player
     {
         for (int i = 0; i < count; i++)
         {
-            if (deck.Count > 0 && hand.Count < 8) // Лимит руки
+            if (deck.Count > 0 && hand.Count < maxHandSize)
             {
                 hand.Add(deck[0]);
                 deck.RemoveAt(0);
             }
         }
+    }
+
+    /// <summary>
+    /// Добирает случайные карты из колоды
+    /// </summary>
+    /// <param name="count">Количество карт для добора</param>
+    public void DrawRandomCards(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (deck.Count > 0 && hand.Count < maxHandSize)
+            {
+                // Берём случайную карту из колоды
+                int randomIndex = Random.Range(0, deck.Count);
+                Card randomCard = deck[randomIndex];
+                hand.Add(randomCard);
+                deck.RemoveAt(randomIndex);
+                Debug.Log($"{playerName} получил карту: {randomCard.cardName}");
+            }
+            else if (deck.Count == 0)
+            {
+                Debug.Log($"{playerName}: колода пуста!");
+                break;
+            }
+            else if (hand.Count >= maxHandSize)
+            {
+                Debug.Log($"{playerName}: рука полна ({maxHandSize} карт)!");
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Проверяет, можно ли добрать карту
+    /// </summary>
+    public bool CanDrawCard()
+    {
+        return deck.Count > 0 && hand.Count < maxHandSize;
+    }
+
+    /// <summary>
+    /// Проверяет, есть ли карты в колоде
+    /// </summary>
+    public bool HasCardsInDeck()
+    {
+        return deck.Count > 0;
     }
 
     public void TakeDamage(int damage)
